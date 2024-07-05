@@ -1,0 +1,31 @@
+class BgpConst:
+    # 可选参数
+    BGP_OPEN_OPT_CAP_IPV4UNC = 'Ipv4-UNC'
+    BGP_OPEN_OPT_CAP_ROUTE_REFRESH = 'Route-Refresh'
+    BGP_OPEN_OPT_CAP_AS4 = 'AS4'
+    BGP_OPEN_OPT_CAP_IPV6UNC = 'Ipv6-UNC'
+
+    BGP_HEAD_LEN = 19  # 含16字节marker + 3字节固定头部
+
+    BGP_OPEN = 1
+    BGP_UPDATE = 2
+    BGP_NOTIFICATION = 3
+    BGP_KEEPALIVE = 4
+
+    BGP_PEER_STATE_NONE = 0
+    BGP_PEER_STATE_IDLE = 1
+    BGP_PEER_STATE_CONNECT = 2
+    BGP_PEER_STATE_OPEN_SENT = 3
+    BGP_PEER_STATE_OPEN_CONFIRM = 4
+    BGP_PEER_STATE_ESTABLISH = 5
+
+    BGP_PEER_STATE = {
+        BGP_PEER_STATE_NONE: 'None',
+        BGP_PEER_STATE_IDLE: 'Idle',
+        BGP_PEER_STATE_CONNECT: 'Connect',
+        BGP_PEER_STATE_OPEN_SENT: 'OpenSent',
+        BGP_PEER_STATE_OPEN_CONFIRM: 'OpenConfirm',
+        BGP_PEER_STATE_ESTABLISH: 'Establish',
+    }
+
+    BGP_DEFAULT_HOLD_TIME = 180

@@ -1,0 +1,4 @@
+class MsgDef:
+    MSG_STRING_GENERATOR = 1
+    MSG_BGP_RUN_LOG = 2
+    MSG_BGP_PEER_STATE = 3
