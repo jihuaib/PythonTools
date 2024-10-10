@@ -41,6 +41,7 @@ class BgpSimulatorModel:
 
         self.share_data_lock = threading.Lock()
         self.share_data = None
+        self.share_data1 = None
 
     def set_bgp_protocol_para(self, local_ip, local_as, peer_ip, peer_as, hold_time, bgp_id, opt_params):
         self._local_ip = local_ip
@@ -86,9 +87,17 @@ class BgpSimulatorModel:
         with self.share_data_lock:
             self.share_data = value
 
+    def set_share_data1(self, value):
+        with self.share_data_lock:
+            self.share_data1 = value
+
     def get_share_data(self):
         with self.share_data_lock:
             return self.share_data
+
+    def get_share_data1(self):
+        with self.share_data_lock:
+            return self.share_data1
 
     def stop_bgp_thread(self):
         if self.bgp_thread.is_alive():  # 检查子线程是否在运行
@@ -175,11 +184,11 @@ class BgpSimulatorModel:
 
     def _process_udp_message(self, data):
         if data.startswith(b'send_route_ipv4'):
-            self.send_bgp_route(self.share_data)
+            self.send_bgp_route(self.share_data, self.share_data1)
         elif data.startswith(b'withdrawn_route_ipv4'):
             self.withdrawn_bgp_route(self.share_data)
         elif data.startswith(b'send_route_ipv6'):
-            self.send_bgp_route_ipv6(self.share_data)
+            self.send_bgp_route_ipv6(self.share_data, self.share_data1)
         elif data.startswith(b'withdrawn_route_ipv6'):
             self.withdrawn_bgp_route_ipv6(self.share_data)
         else:
@@ -237,14 +246,14 @@ class BgpSimulatorModel:
 
         return bgp_message
 
-    def _create_path_attributes(self):
+    def _create_path_attributes(self, custom_path_attribute_str):
         origin = struct.pack('!BBBB', 0x40, 0x01, 0x01, 0x00)  # ORIGIN
         as_path = struct.pack('!BBBBBI', 0x40, 0x02, 0x06, 0x02, 0x01, self._local_as)  # AS_PATH
         next_hop = struct.pack('!BBB4s', 0x40, 0x03, 0x04, ipaddress.ip_address(self._local_ip).packed)  # NEXT_HOP
+        custom_path_attribute = struct.pack(f'!{len(custom_path_attribute_str)}s', custom_path_attribute_str)
+        return origin + as_path + next_hop + custom_path_attribute
 
-        return origin + as_path + next_hop
-
-    def _create_path_attributes_ipv6(self, route):
+    def _create_path_attributes_ipv6(self, route, custom_path_attribute_str):
         origin = struct.pack('!BBBB', 0x40, 0x01, 0x01, 0x00)  # ORIGIN
         as_path = struct.pack('!BBBBBI', 0x40, 0x02, 0x06, 0x02, 0x01, self._local_as)  # AS_PATH
         med = struct.pack('!BBBI', 0x80, 0x04, 0x04, 0x0)  # MED
@@ -257,7 +266,8 @@ class BgpSimulatorModel:
         # MP_REACH_NLRI
         mp_reach_nlri = struct.pack('!BBHHBB16sH16s', 0x90, 0x0E, 0x26, 0x02, 0x01, len(ipv6_mapped.packed),
                                     ipv6_mapped.packed, ip_network.prefixlen, packed_ip)
-        return origin + as_path + med + mp_reach_nlri
+        custom_path_attribute = struct.pack(f'!{len(custom_path_attribute_str)}s', custom_path_attribute_str)
+        return origin + as_path + med + mp_reach_nlri + custom_path_attribute
 
     def _create_nlri(self, route):
         ip_network = ipaddress.ip_network(route)
@@ -304,12 +314,12 @@ class BgpSimulatorModel:
 
         return msg_header + update_msg
 
-    def create_bgp_update_msg(self, route):
+    def create_bgp_update_msg(self, route, custom_path_attribute_str):
         # Withdrawn Routes Length
         withdrawn_routes_length = 0
 
         # Path Attributes
-        path_attributes = self._create_path_attributes()
+        path_attributes = self._create_path_attributes(custom_path_attribute_str)
 
         # Network Layer Reachability Information (NLRI)
         nlri = self._create_nlri(route)
@@ -328,12 +338,12 @@ class BgpSimulatorModel:
 
         return msg_header + update_msg
 
-    def create_bgp_update_msg_ipv6(self, route):
+    def create_bgp_update_msg_ipv6(self, route, custom_path_attribute_str):
         # Withdrawn Routes Length
         withdrawn_routes_length = 0
 
         # Path Attributes
-        path_attributes = self._create_path_attributes_ipv6(route)
+        path_attributes = self._create_path_attributes_ipv6(route, custom_path_attribute_str)
 
         # BGP UPDATE message
         update_msg = struct.pack('!H', withdrawn_routes_length)
@@ -440,11 +450,12 @@ class BgpSimulatorModel:
 
         self.ntfy_main_bgp_run_log(f'end withdrawn ipv6 route:{len(ips)}.\r\n')
 
-    def route_send(self, route_type, ips):
+    def route_send(self, route_type, ips, custom_path_attribute_str):
         if self.peer_state != BgpConst.BGP_PEER_STATE_ESTABLISH:
             show_error("BGP邻居状态需要为ESTABLISH状态。")
             return
         self.set_share_data(ips)
+        self.set_share_data1(custom_path_attribute_str)
         if route_type == 'IPv4':
             self._send_message(b'send_route_ipv4')
         else:
@@ -460,8 +471,8 @@ class BgpSimulatorModel:
         else:
             self._send_message(b'withdrawn_route_ipv6')
 
-    def send_bgp_route(self, ips):
-        update_msgs = [self.create_bgp_update_msg(route) for route in ips]
+    def send_bgp_route(self, ips, custom_path_attribute_str):
+        update_msgs = [self.create_bgp_update_msg(route, custom_path_attribute_str) for route in ips]
 
         # 使用一个队列存储待发送的消息
         pending_msgs = update_msgs.copy()
@@ -484,8 +495,8 @@ class BgpSimulatorModel:
 
         self.ntfy_main_bgp_run_log(f'end send ipv4 route:{len(ips)}.\r\n')
 
-    def send_bgp_route_ipv6(self, ips):
-        update_msgs = [self.create_bgp_update_msg_ipv6(route) for route in ips]
+    def send_bgp_route_ipv6(self, ips, custom_path_attribute_str):
+        update_msgs = [self.create_bgp_update_msg_ipv6(route, custom_path_attribute_str) for route in ips]
 
         # 使用一个队列存储待发送的消息
         pending_msgs = update_msgs.copy()

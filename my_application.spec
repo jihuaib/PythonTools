@@ -22,7 +22,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='工具集合-v1.0',
+    name='工具集合-v1.1',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

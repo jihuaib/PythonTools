@@ -111,6 +111,18 @@ class BgpSimulatorView:
                                          state='readonly')
         self.entry_peer_state.pack(side=tk.LEFT, padx=10)
 
+        # bgp自定义path属性
+        bgp_custom_path_frame = tk.Frame(bgp_cfg_frame)
+        bgp_custom_path_frame.pack(fill=tk.X, padx=10, pady=5)
+
+        tk.Label(bgp_custom_path_frame, text="Custom Path Attribute：").pack(side=tk.LEFT)
+
+        bgp_custom_path_input_frame = tk.Frame(bgp_cfg_frame)
+        bgp_custom_path_input_frame.pack(fill=tk.X, padx=10, pady=5)
+
+        self.bgp_custom_path_text_output = scrolledtext.ScrolledText(bgp_custom_path_input_frame, wrap=tk.WORD, width=60, height=15)
+        self.bgp_custom_path_text_output.pack(fill=tk.BOTH, expand=True)
+
         bgp_button_frame = tk.Frame(bgp_cfg_frame)
         bgp_button_frame.pack(pady=5)
 
@@ -241,6 +253,9 @@ class BgpSimulatorView:
 
     def get_route_input_ip_ipv4(self):
         return self.entry_route_ip_ipv4.get().strip()
+
+    def get_custom_path_attribute(self):
+        return self.bgp_custom_path_text_output.get("1.0", tk.END).strip()
 
     def get_route_input_mask_ipv4(self):
         return self.entry_route_mask_ipv4.get().strip()

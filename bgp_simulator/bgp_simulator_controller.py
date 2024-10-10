@@ -1,3 +1,4 @@
+import binascii
 import ipaddress
 from datetime import datetime
 
@@ -129,14 +130,30 @@ class BgpSimulatorController:
 
         return ips
 
+    def validate_custom_path_attribute_format(self, packet_str):
+        """校验输入格式是否符合要求"""
+        hex_values = packet_str.strip().split()
+
+        for hex_val in hex_values:
+            if len(hex_val) != 2 or not all(c in '0123456789ABCDEFabcdef' for c in hex_val):
+                return False
+        return True
+
     def route_send_on_click(self):
         route_type = self.view.get_route_input_type()
         ret, route_ip, route_mask, route_cnt = self._get_route_cfg(route_type)
         if ret != ErrCodeDef.ERROR_SUCCESS:
             return
 
+        custom_path_attribute = self.view.get_custom_path_attribute()
+        if not self.validate_custom_path_attribute_format(custom_path_attribute):
+            show_error(f"检验失败:\n自定义path属性格式不合法")
+            return
+
+        custom_path_attribute_str = custom_path_attribute.replace(" ", "").replace("\n", "")
+        custom_path_attribute_str = binascii.unhexlify(custom_path_attribute_str)
         ips = self._gen_route_ips(route_type, route_ip, route_mask, route_cnt)
-        self.model.route_send(route_type, ips)
+        self.model.route_send(route_type, ips, custom_path_attribute_str)
 
     def route_cancel_on_click(self):
         route_type = self.view.get_route_input_type()
