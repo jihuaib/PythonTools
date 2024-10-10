@@ -22,8 +22,6 @@ class BgpSimulatorController:
             show_info("BGP已经在运行。")
             return
 
-        self.update_bgp_run_log('start bgp.\r\n')
-
         local_ip = self.view.get_bgp_input_local_ip()
         local_as = self.view.get_bgp_input_local_as()
         peer_ip = self.view.get_bgp_input_peer_ip()
@@ -56,6 +54,7 @@ class BgpSimulatorController:
             local_as = int(local_as)
             peer_as = int(peer_as)
             hold_time = int(hold_time)
+            self.update_bgp_run_log('start bgp.\r\n')
             self.model.set_bgp_protocol_para(local_ip, local_as, peer_ip, peer_as, hold_time, bgp_id, opt_params)
             self.model.start_bgp_thread()
         else:

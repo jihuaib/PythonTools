@@ -5,9 +5,15 @@ import queue
 from bgp_simulator.bgp_simulator_controller import BgpSimulatorController
 from bgp_simulator.bgp_simulator_model import BgpSimulatorModel
 from bgp_simulator.bgp_simulator_view import BgpSimulatorView
+from commit.commit_controller import CommitController
+from commit.commit_model import CommitModel
+from commit.commit_view import CommitView
 from string_generator.string_generator_model import StringGeneratorModel
 from string_generator.string_generator_controller import StringGeneratorController
 from string_generator.string_generator_view import StringGeneratorView
+from svn.svn_controller import SvnController
+from svn.svn_model import SvnModel
+from svn.svn_view import SvnView
 from tools.msg_def import MsgDef
 from udp_simulator.udp_simulator_controller import UdpSimulatorController
 from udp_simulator.udp_simulator_model import UdpSimulatorModel
@@ -52,6 +58,29 @@ class MainController(tk.Tk):
         self.udp_simulator_controller = UdpSimulatorController(self.udp_simulator_model,
                                                                self.udp_simulator_view,
                                                                self.queue)
+        # 创建Commit工具
+        self.commit_tab = ttk.Frame(self.tab_control)
+        self.tab_control.add(self.commit_tab, text="COMMIT工具")
+
+        self.commit_model = CommitModel(self.queue)
+        self.commit_view = CommitView(self.commit_tab)
+        self.udp_simulator_controller = CommitController(self.commit_model,
+                                                         self.commit_view,
+                                                         self.queue)
+        self.commit_view.text_area.tag_config("server", foreground="blue")
+        self.commit_view.text_area.tag_config("user", foreground="green")
+        self.commit_view.text_area.tag_config("error", foreground="red")
+
+        # 创建SVN工具的选项卡
+        self.svn_tab = ttk.Frame(self.tab_control)
+        self.tab_control.add(self.svn_tab, text="SVN工具")
+
+        self.svn_model = SvnModel(self.queue)
+        self.svn_view = SvnView(self.svn_tab)
+        self.svn_controller = SvnController(self.svn_model,
+                                            self.svn_view,
+                                            self.queue)
+
         self.tab_control.pack(expand=1, fill="both")
 
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
