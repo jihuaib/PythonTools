@@ -24,7 +24,7 @@ class StringGeneratorView:
         tk.Label(str_template_frame, text="模板：").pack(side=tk.LEFT)
         self.text_template = scrolledtext.ScrolledText(str_template_frame, wrap=tk.WORD, height=10, width=50)
         self.text_template.insert(tk.END, "ip addr 1.1.{A}.1 24")
-        self.text_template.pack(side=tk.LEFT, padx=10)
+        self.text_template.pack(fill=tk.BOTH, expand=True)
 
         str_para_frame_1 = tk.Frame(self.str_cfg_frame)
         str_para_frame_1.pack(fill=tk.X, padx=10, pady=5)
@@ -57,7 +57,7 @@ class StringGeneratorView:
         self.str_gen_text_frame = tk.Frame(self.str_cfg_frame)
         self.str_gen_text_frame.pack(fill=tk.X, padx=10, pady=5)
 
-        self.text_output = scrolledtext.ScrolledText(self.str_gen_text_frame, wrap=tk.WORD, width=60, height=15)
+        self.text_output = scrolledtext.ScrolledText(self.str_gen_text_frame, wrap=tk.WORD, width=60, height=40)
         self.text_output.pack(fill=tk.BOTH, expand=True)
         self.text_output.config(state=tk.DISABLED)  # 初始设置为不可编辑状态
 

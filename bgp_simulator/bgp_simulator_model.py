@@ -12,6 +12,8 @@ from tools.msg_def import MsgDef
 
 class BgpSimulatorModel:
     def __init__(self, queue):
+        self._custom_opt_para_input = None
+        self._role = None
         self._controller = None
         self._lock = threading.Lock()
 
@@ -43,7 +45,8 @@ class BgpSimulatorModel:
         self.share_data = None
         self.share_data1 = None
 
-    def set_bgp_protocol_para(self, local_ip, local_as, peer_ip, peer_as, hold_time, bgp_id, opt_params):
+    def set_bgp_protocol_para(self, local_ip, local_as, peer_ip, peer_as, hold_time, bgp_id, opt_params, role,
+                              custom_opt_para_input):
         self._local_ip = local_ip
         self._local_as = local_as
         self._peer_ip = peer_ip
@@ -51,6 +54,8 @@ class BgpSimulatorModel:
         self._hold_time = hold_time
         self._bgp_id = bgp_id
         self._opt_params = opt_params
+        self._role = role
+        self._custom_opt_para_input = custom_opt_para_input
 
     def set_observer(self, observer):
         self._controller = observer
@@ -212,8 +217,13 @@ class BgpSimulatorModel:
                 opt_params += struct.pack('!BBBB', 0x02, 0x02, 0x02, 0x00)
             elif opt == BgpConst.BGP_OPEN_OPT_CAP_AS4:
                 opt_params += struct.pack('!BBBBI', 0x02, 0x06, 0x41, 0x04, self._local_as)
-            if opt == BgpConst.BGP_OPEN_OPT_CAP_IPV6UNC:
+            elif opt == BgpConst.BGP_OPEN_OPT_CAP_IPV6UNC:
                 opt_params += struct.pack('!BBBBBBBB', 0x02, 0x06, 0x01, 0x04, 0x00, 0x02, 0x00, 0x01)
+            elif opt == BgpConst.BGP_OPEN_OPT_CAP_ROLE:
+                opt_params += struct.pack('!BBBBB', 0x02, 0x03, 0x09, 0x01, self._role)
+
+        opt_params += struct.pack(f'!{len(self._custom_opt_para_input)}s',
+                                  self._custom_opt_para_input)
         return opt_params
 
     def create_bgp_open_msg(self):
@@ -347,7 +357,7 @@ class BgpSimulatorModel:
 
         # BGP UPDATE message
         update_msg = struct.pack('!H', withdrawn_routes_length)
-        update_msg += struct.pack('!H',  len(path_attributes)) + path_attributes
+        update_msg += struct.pack('!H', len(path_attributes)) + path_attributes
 
         # BGP message header
         msg_length = BgpConst.BGP_HEAD_LEN + len(update_msg)

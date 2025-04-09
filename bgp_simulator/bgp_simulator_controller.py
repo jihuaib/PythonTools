@@ -8,6 +8,16 @@ from tools.input_validator import InputValidator, FieldValidator
 from tools.messagebox_tool import show_info, show_error, show_confirm
 
 
+def validate_custom_input_pkt(packet_str):
+    """校验输入格式是否符合要求"""
+    hex_values = packet_str.strip().split()
+
+    for hex_val in hex_values:
+        if len(hex_val) != 2 or not all(c in '0123456789ABCDEFabcdef' for c in hex_val):
+            return False
+    return True
+
+
 class BgpSimulatorController:
     def __init__(self, model, view, queue):
         self.queue = queue
@@ -30,6 +40,7 @@ class BgpSimulatorController:
         hold_time = self.view.get_bgp_input_hold_time()
         bgp_id = self.view.get_bgp_input_bgp_id()
         opt_params = self.view.get_bgp_input_opt_params()
+        role = self.view.get_bgp_role()
 
         if not hold_time:
             hold_time = BgpConst.BGP_DEFAULT_HOLD_TIME
@@ -45,6 +56,19 @@ class BgpSimulatorController:
         self.validator.add_field('Hold Time', [FieldValidator.is_not_empty, FieldValidator.is_integer])
         self.validator.add_field('Router ID', [FieldValidator.is_not_empty, FieldValidator.is_ip_address])
 
+        if 0 != opt_params.count(BgpConst.BGP_OPEN_OPT_CAP_ROLE):
+            if role == BgpConst.BGP_OPEN_ROLE_INVALID:
+                show_error("使能角色能力的时候，请选择角色！！")
+                return
+
+        custom_opt_para_input = self.view.get_custom_opt_para_input()
+        if not validate_custom_input_pkt(custom_opt_para_input):
+            show_error(f"检验失败:\n自定义opt para格式不合法")
+            return
+
+        custom_opt_para_input = custom_opt_para_input.replace(" ", "").replace("\n", "")
+        custom_opt_para_input = binascii.unhexlify(custom_opt_para_input)
+
         data = {'Local IP': local_ip,
                 'Local AS': local_as,
                 'Peer IP': peer_ip,
@@ -56,7 +80,8 @@ class BgpSimulatorController:
             peer_as = int(peer_as)
             hold_time = int(hold_time)
             self.update_bgp_run_log('start bgp.\r\n')
-            self.model.set_bgp_protocol_para(local_ip, local_as, peer_ip, peer_as, hold_time, bgp_id, opt_params)
+            self.model.set_bgp_protocol_para(local_ip, local_as, peer_ip, peer_as, hold_time, bgp_id, opt_params,
+                                             role, custom_opt_para_input)
             self.model.start_bgp_thread()
         else:
             errors = "\n".join([f"{field}: {', '.join(errs)}" for field, errs in self.validator.get_errors().items()])
@@ -130,15 +155,6 @@ class BgpSimulatorController:
 
         return ips
 
-    def validate_custom_path_attribute_format(self, packet_str):
-        """校验输入格式是否符合要求"""
-        hex_values = packet_str.strip().split()
-
-        for hex_val in hex_values:
-            if len(hex_val) != 2 or not all(c in '0123456789ABCDEFabcdef' for c in hex_val):
-                return False
-        return True
-
     def route_send_on_click(self):
         route_type = self.view.get_route_input_type()
         ret, route_ip, route_mask, route_cnt = self._get_route_cfg(route_type)
@@ -146,7 +162,7 @@ class BgpSimulatorController:
             return
 
         custom_path_attribute = self.view.get_custom_path_attribute()
-        if not self.validate_custom_path_attribute_format(custom_path_attribute):
+        if not validate_custom_input_pkt(custom_path_attribute):
             show_error(f"检验失败:\n自定义path属性格式不合法")
             return
 
@@ -168,4 +184,3 @@ class BgpSimulatorController:
         if self.model.is_bgp_thread_running():
             return show_confirm("退出", "BGP正在运行，确定要退出吗？", self.stop_bgp_on_click)
         return True
-

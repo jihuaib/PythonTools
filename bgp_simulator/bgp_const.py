@@ -4,6 +4,23 @@ class BgpConst:
     BGP_OPEN_OPT_CAP_ROUTE_REFRESH = 'Route-Refresh'
     BGP_OPEN_OPT_CAP_AS4 = 'AS4'
     BGP_OPEN_OPT_CAP_IPV6UNC = 'Ipv6-UNC'
+    BGP_OPEN_OPT_CAP_ROLE = 'Role'
+
+    BGP_OPEN_ROLE_PROVIDER = 'Provider'
+    BGP_OPEN_ROLE_RS = 'RS'
+    BGP_OPEN_ROLE_RS_CLIENT = 'RS-Client'
+    BGP_OPEN_ROLE_CUSTOMER = 'Customer'
+    BGP_OPEN_ROLE_PEER = 'Lateral Peer'
+
+    BGP_OPEN_ROLE_INVALID = 255
+
+    BGP_OPEN_ROLE_CAP = {
+        BGP_OPEN_ROLE_PROVIDER: 0,
+        BGP_OPEN_ROLE_RS: 1,
+        BGP_OPEN_ROLE_RS_CLIENT: 2,
+        BGP_OPEN_ROLE_CUSTOMER: 3,
+        BGP_OPEN_ROLE_PEER: 4,
+    }
 
     BGP_HEAD_LEN = 19  # 含16字节marker + 3字节固定头部
 

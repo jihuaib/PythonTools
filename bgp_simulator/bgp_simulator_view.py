@@ -16,7 +16,8 @@ class BgpSimulatorView:
             BgpConst.BGP_OPEN_OPT_CAP_IPV4UNC: tk.IntVar(value=1),
             BgpConst.BGP_OPEN_OPT_CAP_ROUTE_REFRESH: tk.IntVar(value=1),
             BgpConst.BGP_OPEN_OPT_CAP_AS4: tk.IntVar(value=1),
-            BgpConst.BGP_OPEN_OPT_CAP_IPV6UNC: tk.IntVar(value=0)
+            BgpConst.BGP_OPEN_OPT_CAP_IPV6UNC: tk.IntVar(value=0),
+            BgpConst.BGP_OPEN_OPT_CAP_ROLE: tk.IntVar(value=0)
         }
         # 创建一个主框架
         main_frame = tk.Frame(self.parent)
@@ -47,7 +48,7 @@ class BgpSimulatorView:
         local_frame = tk.Frame(bgp_cfg_frame)
         local_frame.pack(fill=tk.X, padx=10, pady=5)
 
-        tk.Label(local_frame, text="Local IP：   ").pack(side=tk.LEFT)
+        tk.Label(local_frame, text="Local IP：    ").pack(side=tk.LEFT)
         self.entry_local_ip = tk.Entry(local_frame, width=20, state='readonly')
         self.entry_local_ip.pack(side=tk.LEFT, padx=10)
 
@@ -65,7 +66,7 @@ class BgpSimulatorView:
         peer_frame = tk.Frame(bgp_cfg_frame)
         peer_frame.pack(fill=tk.X, padx=10, pady=5)
 
-        tk.Label(peer_frame, text="Peer IP：    ").pack(side=tk.LEFT)
+        tk.Label(peer_frame, text="Peer IP：     ").pack(side=tk.LEFT)
         self.entry_peer_ip = tk.Entry(peer_frame, width=20)
         self.entry_peer_ip.insert(tk.END, "192.168.56.11")
         self.entry_peer_ip.pack(side=tk.LEFT, padx=10)
@@ -95,10 +96,39 @@ class BgpSimulatorView:
         optional_params_frame = tk.Frame(bgp_cfg_frame)
         optional_params_frame.pack(fill=tk.X, padx=10, pady=5)
 
-        tk.Label(optional_params_frame, text="Optional Param：").pack(side=tk.LEFT)
+        tk.Label(optional_params_frame, text="Opt Param：").pack(side=tk.LEFT)
         for option, var in self.optional_params_vars.items():
-            chk = tk.Checkbutton(optional_params_frame, text=option, variable=var)
-            chk.pack(side=tk.LEFT, padx=10)
+            chk = tk.Checkbutton(optional_params_frame, text=option, variable=var, )
+            chk.pack(side=tk.LEFT, padx=5)
+
+        optional_params_role_frame = tk.Frame(bgp_cfg_frame)
+        optional_params_role_frame.pack(fill=tk.X, padx=10, pady=5)
+
+        self.entry_role = BgpConst.BGP_OPEN_ROLE_INVALID
+        tk.Label(optional_params_role_frame, text="选择Role：").pack(side=tk.LEFT)
+        self.selected_role = tk.StringVar()
+        self.roles = [
+            BgpConst.BGP_OPEN_ROLE_PROVIDER, BgpConst.BGP_OPEN_ROLE_RS, BgpConst.BGP_OPEN_ROLE_RS_CLIENT,
+            BgpConst.BGP_OPEN_ROLE_CUSTOMER, BgpConst.BGP_OPEN_ROLE_PEER
+        ]
+        self.role_dropdown = ttk.Combobox(optional_params_role_frame, textvariable=self.selected_role,
+                                          state="readonly", width=20)
+        self.role_dropdown['values'] = self.roles
+        self.role_dropdown.pack(side=tk.LEFT, padx=20)
+        self.role_dropdown.bind('<<ComboboxSelected>>', self.update_role)
+
+        # 自定义可选参数输入框
+        bgp_custom_opt_para_frame = tk.Frame(bgp_cfg_frame)
+        bgp_custom_opt_para_frame.pack(fill=tk.X, padx=10, pady=5)
+
+        tk.Label(bgp_custom_opt_para_frame, text="Custom opt para：").pack(side=tk.LEFT)
+
+        bgp_custom_opt_para_input_frame = tk.Frame(bgp_cfg_frame)
+        bgp_custom_opt_para_input_frame.pack(fill=tk.X, padx=10, pady=5)
+
+        self.bgp_custom_opt_para_input_text = scrolledtext.ScrolledText(bgp_custom_opt_para_input_frame, wrap=tk.WORD,
+                                                                        width=60, height=10)
+        self.bgp_custom_opt_para_input_text.pack(fill=tk.BOTH, expand=True)
 
         # BGP Peer状态显示
         peer_state_frame = tk.Frame(bgp_cfg_frame)
@@ -107,7 +137,7 @@ class BgpSimulatorView:
         tk.Label(peer_state_frame, text="Peer State：").pack(side=tk.LEFT)
 
         self.entry_peer_state_var = tk.StringVar(value="")
-        self.entry_peer_state = tk.Entry(peer_state_frame, width=20, textvariable=self.entry_peer_state_var,
+        self.entry_peer_state = tk.Entry(peer_state_frame, width=50, textvariable=self.entry_peer_state_var,
                                          state='readonly')
         self.entry_peer_state.pack(side=tk.LEFT, padx=10)
 
@@ -120,7 +150,8 @@ class BgpSimulatorView:
         bgp_custom_path_input_frame = tk.Frame(bgp_cfg_frame)
         bgp_custom_path_input_frame.pack(fill=tk.X, padx=10, pady=5)
 
-        self.bgp_custom_path_text_output = scrolledtext.ScrolledText(bgp_custom_path_input_frame, wrap=tk.WORD, width=60, height=15)
+        self.bgp_custom_path_text_output = scrolledtext.ScrolledText(bgp_custom_path_input_frame, wrap=tk.WORD,
+                                                                     width=60, height=15)
         self.bgp_custom_path_text_output.pack(fill=tk.BOTH, expand=True)
 
         bgp_button_frame = tk.Frame(bgp_cfg_frame)
@@ -148,8 +179,10 @@ class BgpSimulatorView:
         tk.Label(route_cfg_title_frame, text="Route配置").pack(side=tk.LEFT)
 
         self.ip_version = tk.StringVar(value="IPv4")
-        ipv4_button = tk.Radiobutton(route_cfg_title_frame, text="IPv4", variable=self.ip_version, value="IPv4", command=self.switch_frame)
-        ipv6_button = tk.Radiobutton(route_cfg_title_frame, text="IPv6", variable=self.ip_version, value="IPv6", command=self.switch_frame)
+        ipv4_button = tk.Radiobutton(route_cfg_title_frame, text="IPv4", variable=self.ip_version, value="IPv4",
+                                     command=self.switch_frame)
+        ipv6_button = tk.Radiobutton(route_cfg_title_frame, text="IPv6", variable=self.ip_version, value="IPv6",
+                                     command=self.switch_frame)
         ipv4_button.pack(side=tk.LEFT, padx=10)
         ipv6_button.pack(side=tk.LEFT, padx=10)
 
@@ -257,6 +290,9 @@ class BgpSimulatorView:
     def get_custom_path_attribute(self):
         return self.bgp_custom_path_text_output.get("1.0", tk.END).strip()
 
+    def get_custom_opt_para_input(self):
+        return self.bgp_custom_opt_para_input_text.get("1.0", tk.END).strip()
+
     def get_route_input_mask_ipv4(self):
         return self.entry_route_mask_ipv4.get().strip()
 
@@ -292,3 +328,11 @@ class BgpSimulatorView:
         info = self.network_utils.get_interface_info(interface_name)
         if info:
             self.update_bgp_local_ip(info['IPv4'])
+
+    def update_role(self, event):
+        role_name = self.selected_role.get()
+        role_value = BgpConst.BGP_OPEN_ROLE_CAP[role_name]
+        self.entry_role = role_value
+
+    def get_bgp_role(self):
+        return self.entry_role
