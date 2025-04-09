@@ -1,11 +1,13 @@
 import tkinter as tk
-from tkinter import messagebox, scrolledtext
+from tkinter import messagebox, scrolledtext, ttk
 
 
-class StringGeneratorView:
+class StringGeneratorView(ttk.Frame):
 
     def __init__(self, parent):
+        super().__init__(parent)
         self.parent = parent
+        outer_scroll_frame = parent.master.master
 
         # 创建一个主框架
         main_frame = tk.Frame(self.parent)
@@ -25,6 +27,8 @@ class StringGeneratorView:
         self.text_template = scrolledtext.ScrolledText(str_template_frame, wrap=tk.WORD, height=10, width=50)
         self.text_template.insert(tk.END, "ip addr 1.1.{A}.1 24")
         self.text_template.pack(fill=tk.BOTH, expand=True)
+        self.text_template.bind("<Enter>", lambda e: outer_scroll_frame.disable_mousewheel())
+        self.text_template.bind("<Leave>", lambda e: outer_scroll_frame.enable_mousewheel())
 
         str_para_frame_1 = tk.Frame(self.str_cfg_frame)
         str_para_frame_1.pack(fill=tk.X, padx=10, pady=5)
@@ -60,6 +64,8 @@ class StringGeneratorView:
         self.text_output = scrolledtext.ScrolledText(self.str_gen_text_frame, wrap=tk.WORD, width=60, height=40)
         self.text_output.pack(fill=tk.BOTH, expand=True)
         self.text_output.config(state=tk.DISABLED)  # 初始设置为不可编辑状态
+        self.text_output.bind("<Enter>", lambda e: outer_scroll_frame.disable_mousewheel())
+        self.text_output.bind("<Leave>", lambda e: outer_scroll_frame.enable_mousewheel())
 
         # 添加右键菜单
         self.text_output.bind("<Button-3>", self.popup_menu)

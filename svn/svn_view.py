@@ -1,12 +1,13 @@
 import telnetlib
 import threading
 import tkinter as tk
-from tkinter import messagebox, scrolledtext, filedialog
+from tkinter import messagebox, scrolledtext, filedialog, ttk
 
 
-class SvnView:
+class SvnView(ttk.Frame):
 
     def __init__(self, parent):
+        super().__init__(parent)
         self.parent = parent
 
         # 创建一个主框架

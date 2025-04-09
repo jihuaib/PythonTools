@@ -7,9 +7,10 @@ from tools.network_tool import NetworkTool
 from tools.tool_tip import Tooltip
 
 
-class UdpSimulatorView:
+class UdpSimulatorView(ttk.Frame):
 
     def __init__(self, parent):
+        super().__init__(parent)
         self.parent = parent
         self.network_utils = NetworkTool()
 

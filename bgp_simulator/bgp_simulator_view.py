@@ -6,11 +6,13 @@ from bgp_simulator.bgp_const import BgpConst
 from tools.network_tool import NetworkTool
 
 
-class BgpSimulatorView:
+class BgpSimulatorView(ttk.Frame):
 
     def __init__(self, parent):
+        super().__init__(parent)
         self.parent = parent
         self.network_utils = NetworkTool()
+        outer_scroll_frame = parent.master.master
 
         self.optional_params_vars = {
             BgpConst.BGP_OPEN_OPT_CAP_IPV4UNC: tk.IntVar(value=1),
@@ -129,6 +131,8 @@ class BgpSimulatorView:
         self.bgp_custom_opt_para_input_text = scrolledtext.ScrolledText(bgp_custom_opt_para_input_frame, wrap=tk.WORD,
                                                                         width=60, height=10)
         self.bgp_custom_opt_para_input_text.pack(fill=tk.BOTH, expand=True)
+        self.bgp_custom_opt_para_input_text.bind("<Enter>", lambda e: outer_scroll_frame.disable_mousewheel())
+        self.bgp_custom_opt_para_input_text.bind("<Leave>", lambda e: outer_scroll_frame.enable_mousewheel())
 
         # BGP Peer状态显示
         peer_state_frame = tk.Frame(bgp_cfg_frame)
@@ -153,6 +157,8 @@ class BgpSimulatorView:
         self.bgp_custom_path_text_output = scrolledtext.ScrolledText(bgp_custom_path_input_frame, wrap=tk.WORD,
                                                                      width=60, height=15)
         self.bgp_custom_path_text_output.pack(fill=tk.BOTH, expand=True)
+        self.bgp_custom_path_text_output.bind("<Enter>", lambda e: outer_scroll_frame.disable_mousewheel())
+        self.bgp_custom_path_text_output.bind("<Leave>", lambda e: outer_scroll_frame.enable_mousewheel())
 
         bgp_button_frame = tk.Frame(bgp_cfg_frame)
         bgp_button_frame.pack(pady=5)
@@ -169,6 +175,8 @@ class BgpSimulatorView:
 
         self.bgp_log_text = scrolledtext.ScrolledText(bgp_log_frame, wrap=tk.WORD, width=60, height=20)
         self.bgp_log_text.pack(fill=tk.BOTH, expand=True)
+        self.bgp_log_text.bind("<Enter>", lambda e: outer_scroll_frame.disable_mousewheel())
+        self.bgp_log_text.bind("<Leave>", lambda e: outer_scroll_frame.enable_mousewheel())
 
         # Route配置部分
         route_cfg_frame = tk.Frame(main_frame, borderwidth=2, relief=tk.SUNKEN)

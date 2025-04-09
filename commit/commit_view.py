@@ -1,12 +1,13 @@
 import telnetlib
 import threading
 import tkinter as tk
-from tkinter import messagebox, scrolledtext
+from tkinter import messagebox, scrolledtext, ttk
 
 
-class CommitView:
+class CommitView(ttk.Frame):
 
     def __init__(self, parent):
+        super().__init__(parent)
         self.parent = parent
 
         # 创建一个主框架
